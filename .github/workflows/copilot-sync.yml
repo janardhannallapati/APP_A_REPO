@@ -16,20 +16,25 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y yq
 
-      - name: Load hierarchy
-        if: ${{ exists('.copilot/copilot-hierarchy.yml') }}
+      - name: Load hierarchy or skip
         run: |
+          if [ ! -f .copilot/copilot-hierarchy.yml ]; then
+            echo "copilot-hierarchy.yml missing, skipping workflow"
+            exit 0
+          fi
+
           ORG=$(yq '.org' .copilot/copilot-hierarchy.yml)
           DIV=$(yq '.division' .copilot/copilot-hierarchy.yml)
           SUBDIV=$(yq '.subdivision' .copilot/copilot-hierarchy.yml)
           APP=$(yq '.application' .copilot/copilot-hierarchy.yml)
+
           echo "ORG=$ORG" >> $GITHUB_ENV
           echo "DIV=$DIV" >> $GITHUB_ENV
           echo "SUBDIV=$SUBDIV" >> $GITHUB_ENV
           echo "APP=$APP" >> $GITHUB_ENV
 
       - name: Checkout subdivision instructions
-        if: ${{ exists('.copilot/copilot-hierarchy.yml') }}
+        if: env.ORG != ''
         continue-on-error: true
         uses: actions/checkout@v4
         with:
@@ -37,14 +42,14 @@ jobs:
           path: subdivision-instructions
 
       - name: Merge Copilot Instructions
-        if: ${{ exists('.copilot/copilot-hierarchy.yml') }}
+        if: env.ORG != ''
         run: |
           mkdir -p .copilot
           cp -Rn subdivision-instructions/.copilot/* .copilot/ || echo "No subdivision-level instructions to merge"
           echo "copilot merge completed"
 
       - name: Commit if changed
-        if: ${{ exists('.copilot/copilot-hierarchy.yml') }}
+        if: env.ORG != ''
         run: |
           git config user.name "copilot-bot"
           git config user.email "copilot-bot@yourcompany.com"
