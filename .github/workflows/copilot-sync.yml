@@ -18,9 +18,10 @@ jobs:
 
       - name: Load hierarchy or skip
         run: |
-          echo "=== DEBUG: Checking hierarchy file at .copilot/copilot-hierarchy.yml ==="
-          ls -l .copilot || echo ".copilot folder missing"
-          if [ ! -f .copilot/copilot-hierarchy.yml ]; then
+          echo "=== DEBUG: Checking for hierarchy file at .copilot/copilot-hierarchy.yml ==="
+          if [ -f .copilot/copilot-hierarchy.yml ]; then
+            echo "✅ FOUND: application-level hierarchy file at path [.copilot/copilot-hierarchy.yml]"
+          else
             echo "❌ copilot-hierarchy.yml missing at the application level (.copilot/copilot-hierarchy.yml)"
             echo "✅ skipping Copilot sync for application-level config"
             exit 0
@@ -35,24 +36,35 @@ jobs:
             echo "❌ ORG not specified in copilot-hierarchy.yml"
             echo "✅ skipping Copilot sync for org level"
             exit 0
+          else
+            echo "✅ ORG found: $ORG"
           fi
+
           if [ -z "$DIV" ]; then
             echo "❌ DIVISION not specified in copilot-hierarchy.yml"
             echo "✅ skipping Copilot sync for division level"
             exit 0
+          else
+            echo "✅ DIVISION found: $DIV"
           fi
+
           if [ -z "$SUBDIV" ]; then
             echo "❌ SUBDIVISION not specified in copilot-hierarchy.yml"
             echo "✅ skipping Copilot sync for subdivision level"
             exit 0
+          else
+            echo "✅ SUBDIVISION found: $SUBDIV"
           fi
+
           if [ -z "$APP" ]; then
             echo "❌ APPLICATION not specified in copilot-hierarchy.yml"
             echo "✅ skipping Copilot sync for application level"
             exit 0
+          else
+            echo "✅ APPLICATION found: $APP"
           fi
 
-          echo "=== DEBUG: hierarchy values loaded ==="
+          echo "=== DEBUG: hierarchy values successfully loaded from application level ==="
           echo "ORG=$ORG"
           echo "DIV=$DIV"
           echo "SUBDIV=$SUBDIV"
