@@ -18,8 +18,11 @@ jobs:
 
       - name: Load hierarchy or skip
         run: |
+          echo "=== DEBUG: Checking hierarchy file at .copilot/copilot-hierarchy.yml ==="
+          ls -l .copilot || echo ".copilot folder missing"
           if [ ! -f .copilot/copilot-hierarchy.yml ]; then
-            echo "copilot-hierarchy.yml missing, skipping workflow"
+            echo "❌ copilot-hierarchy.yml missing at the application level (.copilot/copilot-hierarchy.yml)"
+            echo "✅ skipping Copilot sync for application-level config"
             exit 0
           fi
 
@@ -28,10 +31,38 @@ jobs:
           SUBDIV=$(yq '.subdivision' .copilot/copilot-hierarchy.yml)
           APP=$(yq '.application' .copilot/copilot-hierarchy.yml)
 
+          if [ -z "$ORG" ]; then
+            echo "❌ ORG not specified in copilot-hierarchy.yml"
+            echo "✅ skipping Copilot sync for org level"
+            exit 0
+          fi
+          if [ -z "$DIV" ]; then
+            echo "❌ DIVISION not specified in copilot-hierarchy.yml"
+            echo "✅ skipping Copilot sync for division level"
+            exit 0
+          fi
+          if [ -z "$SUBDIV" ]; then
+            echo "❌ SUBDIVISION not specified in copilot-hierarchy.yml"
+            echo "✅ skipping Copilot sync for subdivision level"
+            exit 0
+          fi
+          if [ -z "$APP" ]; then
+            echo "❌ APPLICATION not specified in copilot-hierarchy.yml"
+            echo "✅ skipping Copilot sync for application level"
+            exit 0
+          fi
+
+          echo "=== DEBUG: hierarchy values loaded ==="
+          echo "ORG=$ORG"
+          echo "DIV=$DIV"
+          echo "SUBDIV=$SUBDIV"
+          echo "APP=$APP"
+
           echo "ORG=$ORG" >> $GITHUB_ENV
           echo "DIV=$DIV" >> $GITHUB_ENV
           echo "SUBDIV=$SUBDIV" >> $GITHUB_ENV
           echo "APP=$APP" >> $GITHUB_ENV
+
 
       - name: Checkout subdivision instructions
         if: env.ORG != ''
