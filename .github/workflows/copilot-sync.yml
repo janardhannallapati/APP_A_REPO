@@ -1,0 +1,44 @@
+name: Sync Copilot Instructions
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 1"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load hierarchy
+        run: |
+          ORG=$(yq '.org' .copilot/copilot-hierarchy.yml)
+          DIV=$(yq '.division' .copilot/copilot-hierarchy.yml)
+          SUBDIV=$(yq '.subdivision' .copilot/copilot-hierarchy.yml)
+          APP=$(yq '.application' .copilot/copilot-hierarchy.yml)
+          echo "ORG=$ORG" >> $GITHUB_ENV
+          echo "DIV=$DIV" >> $GITHUB_ENV
+          echo "SUBDIV=$SUBDIV" >> $GITHUB_ENV
+          echo "APP=$APP" >> $GITHUB_ENV
+
+      - name: Checkout subdivision instructions
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.ORG }}/${{ env.SUBDIV }}-copilot-instructions
+          path: subdivision-instructions
+
+      - name: Merge Copilot Instructions
+        run: |
+          mkdir -p .copilot
+          cp -Rn subdivision-instructions/.copilot/* .copilot/ || echo "No subdivision-level instructions to merge"
+          echo "copilot merge completed"
+
+      - name: Commit if changed
+        run: |
+          git config user.name "copilot-bot"
+          git config user.email "copilot-bot@yourcompany.com"
+          git add .copilot
+          git diff --quiet || git commit -m "sync: subdivision Copilot instructions"
+          git push
