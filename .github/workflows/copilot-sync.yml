@@ -11,6 +11,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yq
+
+      - name: Verify hierarchy file exists
+        run: |
+          if [ ! -f .copilot/copilot-hierarchy.yml ]; then
+            echo "copilot-hierarchy.yml missing, skipping"
+            exit 0
+          fi
+
       - name: Load hierarchy
         run: |
           ORG=$(yq '.org' .copilot/copilot-hierarchy.yml)
@@ -21,7 +33,7 @@ jobs:
           echo "DIV=$DIV" >> $GITHUB_ENV
           echo "SUBDIV=$SUBDIV" >> $GITHUB_ENV
           echo "APP=$APP" >> $GITHUB_ENV
-
+          
       - name: Checkout subdivision instructions
         continue-on-error: true
         uses: actions/checkout@v4
